@@ -1,0 +1,13 @@
+# Reverb's model files (downloaded on the first start), generated voice clips and uploads
+/models/
+tts-voices/
+tts-sources/
+asr-models/
+*.pcm
+# The Mac setup (mac/setup.sh): the Python environments, logs and local settings
+mac/.venv/
+mac/logs/
+mac/settings.env
+__pycache__/
+.pytest_cache/
+.pytest_cache/

@@ -1,0 +1,90 @@
+# Reverb-TTS voice server for the EPUB reader's "Server voice" (https://github.com/jskenney/epub-reader), with the
+# same API as epub-reader-tts-server (Breeze TTS 2) and epub-reader-tts-server-zonos3: see API.md.
+#
+#   1. Build and start (the first start downloads Reverb's weights, about 1.4 GB, into ./models):
+#        docker compose up -d --build
+#   2. On your web server, proxy /tts/ to http://<this host>:7860/, /tts-voices/ to http://<this host>:7861/voices/
+#      and /tts-studio/ to http://<this host>:7861/ (see nginx.conf.example / Caddyfile.example).
+#   3. Open https://<your site>/tts-studio/ to try text, pick preset voices and create your own.
+#
+# Reverb's weights are CC BY-NC 4.0: non-commercial use only (README: "Licence").
+# Needs the NVIDIA Container Toolkit. The API listens on port 7860 on all interfaces (0.0.0.0).
+services:
+  # Reverb-TTS answering the reader's API (API.md): what the website proxies /tts/ to. Uses the GPU.
+  reverb:
+    build: ./reverb
+    image: reverb-tts-server
+    environment:
+      # The weights: fp16 (default), fp32, int8 or int4. They all run in bfloat16 on the GPU; fp16 is the closest to
+      # the original that is still small.
+      REVERB_VARIANT: ${REVERB_VARIANT:-fp16}
+      REVERB_STEPS: ${REVERB_STEPS:-8}
+    ports:
+      - "7860:7860"
+    volumes:
+      - ${REVERB_MODELS_DIR:-./models}:/models
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:7860/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10m
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  # Voice studio: try text, pick preset voices, record / upload voices, pick clips from long recordings, and
+  # manage voices. It also serves the voices to the reader (the website proxies /tts-voices/ to its /voices/).
+  # Doesn't need the GPU.
+  studio:
+    build: ./studio
+    image: reverb-studio
+    environment:
+      TTS_URL: http://reverb:7860
+      ASR_URL: http://asr:7862
+      # The path your web server serves the studio at. Set to "" to open it directly on port 7861.
+      STUDIO_ROOT_PATH: ${STUDIO_ROOT_PATH:-/tts-studio}
+    ports:
+      - "7861:7861"
+    volumes:
+      # The voices (voices.json and the reference clips), kept in ./tts-voices on this machine.
+      - ${TTS_VOICES_DIR:-./tts-voices}:/data/voices
+      # Long recordings uploaded to pick voice clips from (with their transcripts), kept until you delete them.
+      - ${TTS_SOURCES_DIR:-./tts-sources}:/data/sources
+    depends_on:
+      - reverb
+      - asr
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:7861/health"]
+      interval: 30s
+      timeout: 5s
+
+  # Speech-to-text for the studio's "From a long recording" tab: English Whisper (large-v3-turbo) with word
+  # timestamps. Loads the model (about 2 GB of GPU memory) on the first transcription and frees it after 10 idle
+  # minutes. Only the studio talks to it, so no port is published.
+  asr:
+    build: ./asr
+    image: reverb-asr
+    environment:
+      ASR_MODEL: ${ASR_MODEL:-openai/whisper-large-v3-turbo}
+      ASR_IDLE_UNLOAD: ${ASR_IDLE_UNLOAD:-600}
+      ASR_BATCH: ${ASR_BATCH:-8}
+    volumes:
+      - ${ASR_MODELS_DIR:-./asr-models}:/models
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:7862/health"]
+      interval: 30s
+      timeout: 5s
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
