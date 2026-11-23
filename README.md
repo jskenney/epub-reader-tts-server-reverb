@@ -13,7 +13,13 @@ and speed: a 297M-parameter model, many times faster than real time on a recent 
 
 **Licence:** the code here and Reverb's code are Apache-2.0, but **Reverb's weights are
 [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/): non-commercial use only, with attribution**
-("Reverb-TTS by Software Mansion"). For a public or commercial site, use the ZONOS3 server (Apache-2.0 weights)
+("Reverb-TTS by Software Mansion"). **Its audio codec, the Higgs Audio v2 tokenizer, is under the
+[Boson Higgs Audio 2 Community License](https://huggingface.co/bosonai/higgs-audio-v2-tokenizer/blob/main/LICENSE)**,
+based on the Meta Llama 3 Community License: a service that uses it must display "Built with Higgs Materials licensed
+from Boson AI USA, Inc., Copyright Boson AI USA, Inc., All Rights Reserved and Meta Llama 3 licensed under the Meta
+Llama 3 Community License, Copyright Meta Platforms, Inc., All Rights Reserved" on a related page, follow the
+[Llama 3 Acceptable Use Policy](https://llama.meta.com/llama3/use-policy), and needs an expanded licence from Boson AI
+past 100,000 annual active users. For a public or commercial site, use the ZONOS3 server (Apache-2.0 weights)
 instead. As with any voice cloning, you need the rights and consent for any voice you clone.
 
 ## What runs
