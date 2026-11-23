@@ -1,4 +1,5 @@
-# Versions this was tested with (torch itself comes with the base image: PyTorch 2.9.1, CUDA 12.8).
+# Versions this was tested with (torch itself comes with the base image: PyTorch 2.9.1, CUDA 12.8, on Python 3.11).
+# numpy isn't pinned: the image's own, built for its PyTorch, is kept (numpy 2.5 needs Python 3.12).
 reverb-tts==1.0.0
 torchaudio==2.9.1
 transformers==5.24.0
@@ -7,4 +8,4 @@ verbalis==0.1.1
 fastapi==0.162.1
 uvicorn==0.54.0
 python-multipart==0.0.33
-numpy==2.5.4
+numpy>=1.26,<3
